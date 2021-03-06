@@ -4,6 +4,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using MongoDB.Bson;
+using MongoDB.Driver;
 
 namespace Expense.Controllers
 {
@@ -11,10 +13,7 @@ namespace Expense.Controllers
     [Route("[controller]")]
     public class WeatherForecastController : ControllerBase
     {
-        private static readonly string[] Summaries = new[]
-        {
-            "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-        };
+        
 
         private readonly ILogger<WeatherForecastController> _logger;
 
@@ -24,16 +23,13 @@ namespace Expense.Controllers
         }
 
         [HttpGet]
-        public IEnumerable<WeatherForecast> Get()
+        public IEnumerable<Account> Get()
         {
-            var rng = new Random();
-            return Enumerable.Range(1, 5).Select(index => new WeatherForecast
-            {
-                Date = DateTime.Now.AddDays(index),
-                TemperatureC = rng.Next(-20, 55),
-                Summary = Summaries[rng.Next(Summaries.Length)]
-            })
-            .ToArray();
+            var client = new MongoClient("mongodb+srv://TestUser:DPZEUE0mjq0dIXZ7@expensecluster.sbkbj.mongodb.net/ExpenseDatabase?retryWrites=true&w=majority");
+            var database = client.GetDatabase("ExpenseDatabase");
+            var collection = database.GetCollection<Account>("Konta");
+
+            return collection.Find(s => s.Name == "Konto Kuby").ToList();
         }
     }
 }
