@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using MongoDB.Driver;
+using Expense.Services;
 
 namespace Expense
 {
@@ -33,6 +34,16 @@ namespace Expense
             //})
 
             services.AddControllers();
+            services.AddSingleton<IMongoDatabase>(s =>
+            {
+                var uri = s.GetRequiredService<IConfiguration>()["MongoConnectionString"];
+                var database = s.GetRequiredService<IConfiguration>()["MongoDb"];
+                var client = new MongoClient(uri);
+				return client.GetDatabase(database);
+            });
+
+            services.AddSingleton<IExpensesDbService, ExpensesDbService>();
+
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "Expense", Version = "v1" });
