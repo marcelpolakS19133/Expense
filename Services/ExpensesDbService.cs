@@ -11,22 +11,44 @@ namespace Expense.Services
 	{
 
 		private readonly IMongoDatabase db;
+		private readonly IMongoCollection<Account> _accounts;
 
 		public ExpensesDbService(IMongoDatabase database)
 		{
 			db = database;
-		}
-
-		public Account GetAccountByName(string name)
-		{
-			return db.GetCollection<Account>("Konta").Find(a => a.Name.Equals(name)).FirstOrDefault();
+			_accounts = db.GetCollection<Account>("Konta");
 		}
 
 		public IEnumerable<Account> GetAccounts()
 		{
-			var collection = db.GetCollection<Account>("Konta");
-
-			return collection.AsQueryable();
+			return _accounts.AsQueryable();
 		}
+
+		public Account GetAccountByName(string name)
+		{
+			return _accounts.Find(a => a.Name.Equals(name)).FirstOrDefault();
+		}
+
+		public IEnumerable<Expense> GetExpensesForAccountName(string name)
+		{
+			return GetAccountByName(name).Expenses.AsQueryable();
+		}
+
+		public IEnumerable<Expense> AddExpense(string name, Expense expense)
+		{
+
+			var filter = Builders<Account>.Filter.And(
+				Builders<Account>.Filter.Where(x => x.Name == name)
+				);
+
+			expense.Id = ObjectId.GenerateNewId();
+
+			var update = Builders<Account>.Update.Push("expenses", expense);
+
+			_accounts.FindOneAndUpdate(filter, update);
+
+			return GetExpensesForAccountName(name);
+		}
+
 	}
 }

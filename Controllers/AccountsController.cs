@@ -34,5 +34,18 @@ namespace Expense.Controllers
             return db.GetAccountByName(name);
         }
 
+        [HttpGet("{name}/expenses")]
+        public IEnumerable<Expense> GetExpensesByAccountName(string name)
+        {
+            return db.GetExpensesForAccountName(name);
+        }
+
+        [HttpPost("{name}/add")]
+        public IEnumerable<Expense> AddExpense(string name, Expense expense)
+		{
+            return db.AddExpense(name, expense);
+		}
+
+
     }
 }

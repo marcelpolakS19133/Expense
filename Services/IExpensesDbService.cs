@@ -11,5 +11,9 @@ namespace Expense.Services
 		public IEnumerable<Account> GetAccounts();
 		public Account GetAccountByName(string name);
 
+		public IEnumerable<Expense> GetExpensesForAccountName(string name);
+
+		public IEnumerable<Expense> AddExpense(string name, Expense expense); 
+
 	}
 }
