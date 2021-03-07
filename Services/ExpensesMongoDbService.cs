@@ -67,7 +67,7 @@ namespace Expense.Services
 
             var accId = new ObjectId(accountId);
             var update = Builders<Account>.Update.Push("expenses", expense);
-            
+
             _accounts.FindOneAndUpdate(acc => acc.Id.Equals(accId), update);
 
             return expense;
@@ -76,7 +76,7 @@ namespace Expense.Services
         public Expense ModifyExpense(string accountId, Expense expense)
         {
             var accId = new ObjectId(accountId);
-            var filter = Builders<Account>.Filter.Where(acc => acc.Id.Equals(accId) && acc.Expenses.Any(exp=>exp.Id.Equals(expense.Id)));
+            var filter = Builders<Account>.Filter.Where(acc => acc.Id.Equals(accId) && acc.Expenses.Any(exp => exp.Id.Equals(expense.Id)));
 
             var updates = new List<UpdateDefinition<Account>>();
 
