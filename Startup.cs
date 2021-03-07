@@ -27,17 +27,11 @@ namespace Expense
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            
-            //services.AddSingleton<IMongoClient,MongoClient>(s =>
-            //{
-            //    return new MongoClient()
-            //})
-
             services.AddControllers();
-            services.AddSingleton<IMongoDatabase>(s =>
+            services.AddSingleton(s =>
             {
-                var uri = s.GetRequiredService<IConfiguration>()["MongoConnectionString"];
-                var database = s.GetRequiredService<IConfiguration>()["MongoDb"];
+                var uri = Configuration["MongoConnectionString"];
+                var database = Configuration["MongoDb"];
                 var client = new MongoClient(uri);
 				return client.GetDatabase(database);
             });
