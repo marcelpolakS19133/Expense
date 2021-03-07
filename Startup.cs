@@ -31,6 +31,10 @@ namespace Expense
             services.AddSingleton(s =>
             {
                 var uri = Configuration["MongoConnectionString"];
+                if(uri==null)
+                {
+                    uri = Environment.GetEnvironmentVariable("MongoConnectionString");
+                }
                 var database = Configuration["MongoDb"];
                 var client = new MongoClient(uri);
 				return client.GetDatabase(database);
