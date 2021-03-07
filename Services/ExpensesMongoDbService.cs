@@ -95,7 +95,7 @@ namespace Expense.Services
         {
             var accId = new ObjectId(accountId);
             var expId = new ObjectId(expenseId);
-            var filter = Builders<Account>.Filter.Where(acc => acc.Id.Equals(accId)));
+            var filter = Builders<Account>.Filter.Where(acc => acc.Id.Equals(accId));
 
             var update = Builders<Account>.Update.PullFilter(acc => acc.Expenses, exp => exp.Id.Equals(expId));
 
