@@ -23,28 +23,57 @@ namespace Expense.Controllers
         }
 
         [HttpGet]
-        public IEnumerable<Account> Get(bool withExpenses)
+        public ActionResult<IEnumerable<Account>> Get(bool withExpenses)
         {
-            return db.GetAccounts(withExpenses);
+            return Ok(db.GetAccounts(withExpenses));
         }
 
-        [HttpGet("{name}")]
-        public Account GetByName(string name)
+        [HttpGet("{id}")]
+        public ActionResult<Account> GetById(string id, bool withExpenses)
         {
-            return db.GetAccountByName(name);
+            return Ok(db.GetAccountById(id, withExpenses));
         }
 
-        [HttpGet("{name}/expenses")]
-        public IEnumerable<Expense> GetExpensesByAccountName(string name)
+        [HttpPost]
+        public ActionResult<Account> Post(Account account)
         {
-
-            return db.GetExpensesForAccountName(name);
+            var created = db.CreateAccount(account);
+            return Created($"accounts/{created.Id}", created);
         }
 
-        [HttpPost("{name}/add")]
-        public IEnumerable<Expense> AddExpense(string name, Expense expense)
+        [HttpPut("{id}")]
+        public ActionResult<Account> Modify(string id, Account account)
+        {
+            account.Id = new ObjectId(id);
+            var modified = db.ModifyAccount(account);
+            return Ok(modified);
+        }
+
+        [HttpDelete("{id}")]
+        public ActionResult<Account> Delete(string id)
+        {
+            return Ok(db.DeleteAccount(id));
+        }
+
+        [HttpPost("{accountId}/expenses")]
+        public ActionResult<Expense> AddExpense(string accountId, Expense expense)
 		{
-            return db.AddExpense(name, expense);
+            var created = db.AddExpense(accountId, expense);
+            return Created($"accounts/{accountId}/expenses/{created.Id}", created);
 		}
+
+        [HttpPut("{accountId}/expenses/{expenseId}")]
+        public ActionResult<Expense> ModifyExpense(string accountId, string expenseId, Expense expense)
+        {
+            expense.Id = new ObjectId(expenseId);
+            var modified = db.ModifyExpense(accountId, expense);
+            return Ok(modified);
+        }
+
+        [HttpDelete("{accountId}/expenses/{expenseId}")]
+        public ActionResult<Expense> DeleteExpense(string accountId, string expenseId)
+        {
+            return Ok(db.DeleteExpense(accountId, expenseId));
+        }
     }
 }
