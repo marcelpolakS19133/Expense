@@ -8,10 +8,10 @@ using MongoDB.Driver;
 
 namespace Expense
 {
-	public class Expense
-	{
+    public class Expense
+    {
 
-		[BsonId]
+        [BsonId]
         public ObjectId Id { get; set; }
         [BsonElement("category")]
         public string Category { get; set; }

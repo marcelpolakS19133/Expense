@@ -15,7 +15,5 @@ namespace Expense
         public String Name { get; set; }
         [BsonElement("expenses")]
         public Expense[] Expenses { get; set; }
-
-
     }
 }

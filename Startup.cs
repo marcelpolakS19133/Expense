@@ -32,13 +32,13 @@ namespace Expense
             services.AddSingleton(s =>
             {
                 var uri = Configuration["MongoConnectionString"];
-                if(uri==null)
+                if (uri == null)
                 {
                     uri = Environment.GetEnvironmentVariable("MongoConnectionString");
                 }
                 var database = Configuration["MongoDb"];
                 var mongoSettings = MongoClientSettings.FromConnectionString(uri);
-                
+
                 //mongoSettings.ClusterConfigurator = cb =>
                 //{
                 //    cb.Subscribe<CommandStartedEvent>(e =>
@@ -48,7 +48,7 @@ namespace Expense
                 //};
 
                 var client = new MongoClient(mongoSettings);
-				return client.GetDatabase(database);
+                return client.GetDatabase(database);
             });
 
             services.AddSingleton<IExpensesDbService, ExpensesMongoDbService>();
