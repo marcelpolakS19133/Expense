@@ -47,6 +47,8 @@ namespace Expense.Services
             if (account.Name != null) updates.Add(Builders<Account>.Update.Set("name", account.Name));
             if (account.Expenses != null) updates.Add(Builders<Account>.Update.Set("expenses", account.Expenses));
 
+            if (updates.Count == 0) return null;
+
             var update = Builders<Account>.Update.Combine(updates);
 
             return _accounts.FindOneAndUpdate(acc => acc.Id.Equals(account.Id), update);
