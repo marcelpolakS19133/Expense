@@ -7,13 +7,18 @@ namespace Expense.Services
 {
 	public interface IExpensesDbService
 	{
+        #region accounts
+        public IEnumerable<Account> GetAccounts(bool withExpenses);
+		public Account GetAccountById(string id, bool withExpenses);
+		public Account CreateAccount(Account account);
+		public Account ModifyAccount(Account account);
+		public Account DeleteAccount(string id);
+        #endregion
 
-		public IEnumerable<Account> GetAccounts();
-		public Account GetAccountByName(string name);
-
-		public IEnumerable<Expense> GetExpensesForAccountName(string name);
-
-		public IEnumerable<Expense> AddExpense(string name, Expense expense); 
-
-	}
+        #region expenses
+        public Expense AddExpense(string accountId, Expense expense);
+        public Expense ModifyExpense(string accountId, Expense expense);
+        public Expense DeleteExpense(string accountId, string expenseId);
+        #endregion
+    }
 }
