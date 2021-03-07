@@ -13,11 +13,11 @@ namespace Expense
 
 		[BsonId]
         public ObjectId Id { get; set; }
-        [BsonElement("Category")]
-        public String Category { get; set; }
-        [BsonElement("Price")]
-        public Double Price { get; set; }
-        [BsonElement("Title")]
+        [BsonElement("category")]
+        public string Category { get; set; }
+        [BsonElement("price")]
+        public double Price { get; set; }
+        [BsonElement("title")]
         public String Title { get; set; }
     }
 }

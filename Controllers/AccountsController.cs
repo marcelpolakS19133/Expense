@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using MongoDB.Bson;
 using MongoDB.Driver;
 using Expense.Services;
+using System.Net;
 
 namespace Expense.Controllers
 {
@@ -46,7 +47,7 @@ namespace Expense.Controllers
         {
             account.Id = new ObjectId(id);
             var modified = db.ModifyAccount(account);
-            return Ok(modified);
+            return modified == null ? StatusCode((int)HttpStatusCode.NotModified) : Ok(modified);
         }
 
         [HttpDelete("{id}")]
