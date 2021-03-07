@@ -8,7 +8,7 @@ namespace Expense.Services
 	public interface IExpensesDbService
 	{
 
-		public IEnumerable<Account> GetAccounts();
+		public IEnumerable<Account> GetAccounts(bool withExpenses);
 		public Account GetAccountByName(string name);
 
 		public IEnumerable<Expense> GetExpensesForAccountName(string name);

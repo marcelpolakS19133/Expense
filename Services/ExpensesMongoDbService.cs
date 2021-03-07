@@ -7,21 +7,21 @@ using MongoDB.Driver;
 
 namespace Expense.Services
 {
-	public class ExpensesDbService : IExpensesDbService
+	public class ExpensesMongoDbService : IExpensesDbService
 	{
 
 		private readonly IMongoDatabase db;
 		private readonly IMongoCollection<Account> _accounts;
 
-		public ExpensesDbService(IMongoDatabase database)
+		public ExpensesMongoDbService(IMongoDatabase database)
 		{
 			db = database;
 			_accounts = db.GetCollection<Account>("Konta");
 		}
 
-		public IEnumerable<Account> GetAccounts()
+		public IEnumerable<Account> GetAccounts(bool withExpenses)
 		{
-			return _accounts.AsQueryable();
+			return withExpenses ? _accounts.AsQueryable() : _accounts.AsQueryable().Select(acc => new Account{ Id = acc.Id, Name = acc.Name });
 		}
 
 		public Account GetAccountByName(string name)
@@ -49,6 +49,5 @@ namespace Expense.Services
 
 			return GetExpensesForAccountName(name);
 		}
-
 	}
 }

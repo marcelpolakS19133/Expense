@@ -12,6 +12,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using MongoDB.Driver;
 using Expense.Services;
+using MongoDB.Driver.Core.Events;
 
 namespace Expense
 {
@@ -36,11 +37,21 @@ namespace Expense
                     uri = Environment.GetEnvironmentVariable("MongoConnectionString");
                 }
                 var database = Configuration["MongoDb"];
-                var client = new MongoClient(uri);
+                var mongoSettings = MongoClientSettings.FromConnectionString(uri);
+                
+                //mongoSettings.ClusterConfigurator = cb =>
+                //{
+                //    cb.Subscribe<CommandStartedEvent>(e =>
+                //    {
+                //        Console.WriteLine($"{e.CommandName}, {e.Command}");
+                //    });
+                //};
+
+                var client = new MongoClient(mongoSettings);
 				return client.GetDatabase(database);
             });
 
-            services.AddSingleton<IExpensesDbService, ExpensesDbService>();
+            services.AddSingleton<IExpensesDbService, ExpensesMongoDbService>();
 
             services.AddSwaggerGen(c =>
             {

@@ -23,9 +23,9 @@ namespace Expense.Controllers
         }
 
         [HttpGet]
-        public IEnumerable<Account> Get()
+        public IEnumerable<Account> Get(bool withExpenses)
         {
-            return db.GetAccounts();
+            return db.GetAccounts(withExpenses);
         }
 
         [HttpGet("{name}")]
@@ -37,6 +37,7 @@ namespace Expense.Controllers
         [HttpGet("{name}/expenses")]
         public IEnumerable<Expense> GetExpensesByAccountName(string name)
         {
+
             return db.GetExpensesForAccountName(name);
         }
 
@@ -45,7 +46,5 @@ namespace Expense.Controllers
 		{
             return db.AddExpense(name, expense);
 		}
-
-
     }
 }
