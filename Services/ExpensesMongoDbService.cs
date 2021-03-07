@@ -63,43 +63,46 @@ namespace Expense.Services
         #region expenses
         public Expense AddExpense(string accountId, Expense expense)
         {
-            throw new NotImplementedException();
+            expense.Id = ObjectId.GenerateNewId();
+
+            var accId = new ObjectId(accountId);
+            var update = Builders<Account>.Update.Push("expenses", expense);
+            
+            _accounts.FindOneAndUpdate(acc => acc.Id.Equals(accId), update);
+
+            return expense;
         }
 
         public Expense ModifyExpense(string accountId, Expense expense)
         {
-            throw new NotImplementedException();
+            var accId = new ObjectId(accountId);
+            var filter = Builders<Account>.Filter.Where(acc => acc.Id.Equals(accId) && acc.Expenses.Any(exp=>exp.Id.Equals(expense.Id)));
+
+            var updates = new List<UpdateDefinition<Account>>();
+
+            if (expense.Price != 0) updates.Add(Builders<Account>.Update.Set("expenses.$.price", expense.Price));
+            if (expense.Title != null) updates.Add(Builders<Account>.Update.Set("expenses.$.title", expense.Title));
+            if (expense.Category != null) updates.Add(Builders<Account>.Update.Set("expenses.$.category", expense.Category));
+
+            var update = Builders<Account>.Update.Combine(updates);
+
+            var account = _accounts.FindOneAndUpdate(filter, update);
+
+            return expense;
         }
 
         public Expense DeleteExpense(string accountId, string expenseId)
         {
-            throw new NotImplementedException();
+            var accId = new ObjectId(accountId);
+            var expId = new ObjectId(expenseId);
+            var filter = Builders<Account>.Filter.Where(acc => acc.Id.Equals(accId)));
+
+            var update = Builders<Account>.Update.PullFilter(acc => acc.Expenses, exp => exp.Id.Equals(expId));
+
+            var account = _accounts.FindOneAndUpdate(filter, update);
+
+            return null;
         }
         #endregion
-        //public Account GetAccountByName(string name)
-        //{
-        //	return _accounts.Find(a => a.Name.Equals(name)).FirstOrDefault();
-        //}
-
-        //public IEnumerable<Expense> GetExpensesForAccountName(string name)
-        //{
-        //	return GetAccountByName(name).Expenses.AsQueryable();
-        //}
-
-        //public IEnumerable<Expense> AddExpense(string name, Expense expense)
-        //{
-
-        //	var filter = Builders<Account>.Filter.And(
-        //		Builders<Account>.Filter.Where(x => x.Name == name)
-        //		);
-
-        //	expense.Id = ObjectId.GenerateNewId();
-
-        //	var update = Builders<Account>.Update.Push("expenses", expense);
-
-        //	_accounts.FindOneAndUpdate(filter, update);
-
-        //	return GetExpensesForAccountName(name);
-        //}
     }
 }

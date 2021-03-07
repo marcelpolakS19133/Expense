@@ -26,6 +26,10 @@ namespace Expense.Controllers
         [HttpGet]
         public ActionResult<IEnumerable<Account>> Get(bool withExpenses)
         {
+            foreach (var acc in db.GetAccounts(true))
+            {
+                Console.WriteLine(acc.Id);
+            }
             return Ok(db.GetAccounts(withExpenses));
         }
 
