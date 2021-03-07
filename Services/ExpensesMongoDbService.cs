@@ -7,17 +7,17 @@ using MongoDB.Driver;
 
 namespace Expense.Services
 {
-	public class ExpensesMongoDbService : IExpensesDbService
-	{
+    public class ExpensesMongoDbService : IExpensesDbService
+    {
 
-		private readonly IMongoDatabase db;
-		private readonly IMongoCollection<Account> _accounts;
+        private readonly IMongoDatabase db;
+        private readonly IMongoCollection<Account> _accounts;
 
-		public ExpensesMongoDbService(IMongoDatabase database)
-		{
-			db = database;
-			_accounts = db.GetCollection<Account>("Konta");
-		}
+        public ExpensesMongoDbService(IMongoDatabase database)
+        {
+            db = database;
+            _accounts = db.GetCollection<Account>("Konta");
+        }
         #region accounts
         public IEnumerable<Account> GetAccounts(bool withExpenses)
         {
@@ -26,22 +26,36 @@ namespace Expense.Services
 
         public Account GetAccountById(string id, bool withExpenses)
         {
-            throw new NotImplementedException();
+            var accId = new ObjectId(id);
+            return withExpenses ? _accounts.Find(acc => acc.Id.Equals(accId)).SingleOrDefault()
+                                : _accounts.AsQueryable().Select(acc => new Account { Id = acc.Id, Name = acc.Name })
+                                                         .Where(acc => acc.Id.Equals(accId))
+                                                         .SingleOrDefault();
         }
 
         public Account CreateAccount(Account account)
         {
-            throw new NotImplementedException();
+            account.Id = ObjectId.GenerateNewId();
+            _accounts.InsertOne(account);
+            return account;
         }
 
         public Account ModifyAccount(Account account)
         {
-            throw new NotImplementedException();
+            var updates = new List<UpdateDefinition<Account>>();
+
+            if (account.Name != null) updates.Add(Builders<Account>.Update.Set("name", account.Name));
+            if (account.Expenses != null) updates.Add(Builders<Account>.Update.Set("expenses", account.Expenses));
+
+            var update = Builders<Account>.Update.Combine(updates);
+
+            return _accounts.FindOneAndUpdate(acc => acc.Id.Equals(account.Id), update);
         }
 
         public Account DeleteAccount(string id)
         {
-            throw new NotImplementedException();
+            var accId = new ObjectId(id);
+            return _accounts.FindOneAndDelete(acc => acc.Id.Equals(accId));
         }
         #endregion
         #region expenses
