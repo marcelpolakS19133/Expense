@@ -28,6 +28,7 @@ namespace Expense
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddHttpClient<FacebookAuthService>();
             services.AddControllers();
             services.AddSingleton(s =>
             {
@@ -53,6 +54,10 @@ namespace Expense
 
             services.AddSingleton<IExpensesDbService, ExpensesMongoDbService>();
 
+            services.AddSingleton<IAuthService, FacebookAuthService>();
+
+            services.Configure<FBLoginConfig>(Configuration.GetSection("FBLoginConfig"));
+            
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "Expense", Version = "v1" });
