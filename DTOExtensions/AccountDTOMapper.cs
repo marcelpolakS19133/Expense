@@ -12,11 +12,15 @@ namespace Expense.Services
     {
         public static Account ToAccount(this AccountDTO dto)
         {
-            var expenses = new Expense[dto.Expenses.Count];
-            int i = 0;
-            foreach (var expenseDTO in dto.Expenses)
+            var expenses = Array.Empty<Expense>();
+            if (dto.Expenses != null)
             {
-                expenses[i++]=expenseDTO.ToExpense();
+                expenses = new Expense[dto.Expenses.Count];
+                int i = 0;
+                foreach (var expenseDTO in dto.Expenses)
+                {
+                    expenses[i++] = expenseDTO.ToExpense();
+                }
             }
             return new Account
             {
@@ -27,10 +31,14 @@ namespace Expense.Services
         }
         public static AccountDTO ToAccountDTO(this Account account)
         {
-            var expenses = new List<ExpenseDTO>(account.Expenses.Length);
-            foreach (var expense in account.Expenses)
+            List<ExpenseDTO> expenses = null;
+            if (account.Expenses != null)
             {
-                expenses.Add(expense.ToExpenseDTO());
+                expenses = new List<ExpenseDTO>(account.Expenses.Length);
+                foreach (var expense in account.Expenses)
+                {
+                    expenses.Add(expense.ToExpenseDTO());
+                }
             }
             return new AccountDTO
             {
@@ -38,7 +46,6 @@ namespace Expense.Services
                 Name = account.Name,
                 Expenses = expenses
             };
-            
         }
     }
 }

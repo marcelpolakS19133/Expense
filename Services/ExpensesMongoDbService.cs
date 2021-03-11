@@ -36,7 +36,7 @@ namespace Expense.Services
         {
             var accId = new ObjectId(id);
             return (withExpenses ? _accounts.Find(acc => acc.Id.Equals(accId)).SingleOrDefault()
-                                : _accounts.AsQueryable().Select(acc => new Account { Id = acc.Id, Name = acc.Name })
+                                 : _accounts.AsQueryable().Select(acc => new Account { Id = acc.Id, Name = acc.Name })
                                                          .Where(acc => acc.Id.Equals(accId))
                                                          .SingleOrDefault()).ToAccountDTO();
         }
