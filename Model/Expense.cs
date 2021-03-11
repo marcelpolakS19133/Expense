@@ -10,7 +10,6 @@ namespace Expense
 {
     public class Expense
     {
-
         [BsonId]
         public ObjectId Id { get; set; }
         [BsonElement("category")]
@@ -18,6 +17,6 @@ namespace Expense
         [BsonElement("price")]
         public double Price { get; set; }
         [BsonElement("title")]
-        public String Title { get; set; }
+        public string Title { get; set; }
     }
 }
