@@ -8,6 +8,7 @@ using MongoDB.Bson;
 using MongoDB.Driver;
 using Expense.Services;
 using System.Net;
+using Expense.DTO;
 
 namespace Expense.Controllers
 {
@@ -24,55 +25,55 @@ namespace Expense.Controllers
         }
 
         [HttpGet]
-        public ActionResult<IEnumerable<Account>> Get(bool withExpenses)
+        public ActionResult<IEnumerable<AccountDTO>> Get(bool withExpenses)
         {
             return Ok(db.GetAccounts(withExpenses));
         }
 
         [HttpGet("{id}")]
-        public ActionResult<Account> GetById(string id, bool withExpenses)
+        public ActionResult<AccountDTO> GetById(string id, bool withExpenses)
         {
             return Ok(db.GetAccountById(id, withExpenses));
         }
 
         [HttpPost]
-        public ActionResult<Account> Post(Account account)
+        public ActionResult<AccountDTO> Post(AccountDTO account)
         {
             var created = db.CreateAccount(account);
             return Created($"accounts/{created.Id}", created);
         }
 
         [HttpPut("{id}")]
-        public ActionResult<Account> Modify(string id, Account account)
+        public ActionResult<AccountDTO> Modify(string id, AccountDTO account)
         {
-            account.Id = new ObjectId(id);
+            account.Id = id;
             var modified = db.ModifyAccount(account);
             return modified == null ? StatusCode((int)HttpStatusCode.NotModified) : Ok(modified);
         }
 
         [HttpDelete("{id}")]
-        public ActionResult<Account> Delete(string id)
+        public ActionResult<AccountDTO> Delete(string id)
         {
             return Ok(db.DeleteAccount(id));
         }
 
         [HttpPost("{accountId}/expenses")]
-        public ActionResult<Expense> AddExpense(string accountId, Expense expense)
+        public ActionResult<ExpenseDTO> AddExpense(string accountId, ExpenseDTO expense)
         {
             var created = db.AddExpense(accountId, expense);
             return Created($"accounts/{accountId}/expenses/{created.Id}", created);
         }
 
         [HttpPut("{accountId}/expenses/{expenseId}")]
-        public ActionResult<Expense> ModifyExpense(string accountId, string expenseId, Expense expense)
+        public ActionResult<ExpenseDTO> ModifyExpense(string accountId, string expenseId, ExpenseDTO expense)
         {
-            expense.Id = new ObjectId(expenseId);
+            expense.Id = expenseId;
             var modified = db.ModifyExpense(accountId, expense);
             return Ok(modified);
         }
 
         [HttpDelete("{accountId}/expenses/{expenseId}")]
-        public ActionResult<Expense> DeleteExpense(string accountId, string expenseId)
+        public ActionResult<ExpenseDTO> DeleteExpense(string accountId, string expenseId)
         {
             return Ok(db.DeleteExpense(accountId, expenseId));
         }
