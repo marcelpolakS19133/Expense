@@ -24,7 +24,7 @@ namespace Expense.Services
             }
             return new Account
             {
-                Id = new ObjectId(dto.Id),
+                Id = dto.Id != null && dto.Id.Length == 24 ? new ObjectId(dto.Id) : ObjectId.GenerateNewId(),
                 Name = dto.Name,
                 Expenses = expenses
             };

@@ -13,7 +13,7 @@ namespace Expense.DTOExtensions
         {
             return new Expense
             {
-                Id = new ObjectId(dto.Id),
+                Id = dto.Id != null && dto.Id.Length == 24 ? new ObjectId(dto.Id) : ObjectId.GenerateNewId(),
                 Category = dto.Category,
                 Price = dto.Price,
                 Title = dto.Title
