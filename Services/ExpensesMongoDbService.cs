@@ -4,6 +4,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using MongoDB.Bson;
 using MongoDB.Driver;
+using Expense.DTOExtensions;
+using Expense.DTO;
 
 namespace Expense.Services
 {
@@ -19,29 +21,37 @@ namespace Expense.Services
             _accounts = db.GetCollection<Account>("Konta");
         }
         #region accounts
-        public IEnumerable<Account> GetAccounts(bool withExpenses)
+        public IEnumerable<AccountDTO> GetAccounts(bool withExpenses)
         {
-            return withExpenses ? _accounts.AsQueryable() : _accounts.AsQueryable().Select(acc => new Account { Id = acc.Id, Name = acc.Name });
+            var accounts = withExpenses ? _accounts.AsQueryable() : _accounts.AsQueryable().Select(acc => new Account { Id = acc.Id, Name = acc.Name });
+            var accountDTOs = new List<AccountDTO>(accounts.Count());
+            foreach (var account in accounts)
+            {
+                accountDTOs.Add(account.ToAccountDTO());
+            }
+            return accountDTOs;
         }
 
-        public Account GetAccountById(string id, bool withExpenses)
+        public AccountDTO GetAccountById(string id, bool withExpenses)
         {
             var accId = new ObjectId(id);
-            return withExpenses ? _accounts.Find(acc => acc.Id.Equals(accId)).SingleOrDefault()
-                                : _accounts.AsQueryable().Select(acc => new Account { Id = acc.Id, Name = acc.Name })
+            return (withExpenses ? _accounts.Find(acc => acc.Id.Equals(accId)).SingleOrDefault()
+                                 : _accounts.AsQueryable().Select(acc => new Account { Id = acc.Id, Name = acc.Name })
                                                          .Where(acc => acc.Id.Equals(accId))
-                                                         .SingleOrDefault();
+                                                         .SingleOrDefault()).ToAccountDTO();
         }
 
-        public Account CreateAccount(Account account)
+        public AccountDTO CreateAccount(AccountDTO accountDTO)
         {
+            var account = accountDTO.ToAccount();
             account.Id = ObjectId.GenerateNewId();
             _accounts.InsertOne(account);
-            return account;
+            return account.ToAccountDTO();
         }
 
-        public Account ModifyAccount(Account account)
+        public AccountDTO ModifyAccount(AccountDTO accountDTO)
         {
+            var account = accountDTO.ToAccount();
             var updates = new List<UpdateDefinition<Account>>();
 
             if (account.Name != null) updates.Add(Builders<Account>.Update.Set("name", account.Name));
@@ -51,18 +61,19 @@ namespace Expense.Services
 
             var update = Builders<Account>.Update.Combine(updates);
 
-            return _accounts.FindOneAndUpdate(acc => acc.Id.Equals(account.Id), update);
+            return _accounts.FindOneAndUpdate(acc => acc.Id.Equals(account.Id), update).ToAccountDTO();
         }
 
-        public Account DeleteAccount(string id)
+        public AccountDTO DeleteAccount(string id)
         {
             var accId = new ObjectId(id);
-            return _accounts.FindOneAndDelete(acc => acc.Id.Equals(accId));
+            return _accounts.FindOneAndDelete(acc => acc.Id.Equals(accId)).ToAccountDTO();
         }
         #endregion
         #region expenses
-        public Expense AddExpense(string accountId, Expense expense)
+        public ExpenseDTO AddExpense(string accountId, ExpenseDTO expenseDTO)
         {
+            var expense = expenseDTO.ToExpense();
             expense.Id = ObjectId.GenerateNewId();
 
             var accId = new ObjectId(accountId);
@@ -70,13 +81,15 @@ namespace Expense.Services
 
             _accounts.FindOneAndUpdate(acc => acc.Id.Equals(accId), update);
 
-            return expense;
+            return expense.ToExpenseDTO();
         }
 
-        public Expense ModifyExpense(string accountId, Expense expense)
+        public ExpenseDTO ModifyExpense(string accountId, ExpenseDTO expense)
         {
             var accId = new ObjectId(accountId);
-            var filter = Builders<Account>.Filter.Where(acc => acc.Id.Equals(accId) && acc.Expenses.Any(exp => exp.Id.Equals(expense.Id)));
+            var expId = new ObjectId(expense.Id);
+
+            var filter = Builders<Account>.Filter.Where(acc => acc.Id.Equals(accId) && acc.Expenses.Any(exp => exp.Id.Equals(expId)));
 
             var updates = new List<UpdateDefinition<Account>>();
 
@@ -91,7 +104,7 @@ namespace Expense.Services
             return expense;
         }
 
-        public Expense DeleteExpense(string accountId, string expenseId)
+        public ExpenseDTO DeleteExpense(string accountId, string expenseId)
         {
             var accId = new ObjectId(accountId);
             var expId = new ObjectId(expenseId);
@@ -99,9 +112,13 @@ namespace Expense.Services
 
             var update = Builders<Account>.Update.PullFilter(acc => acc.Expenses, exp => exp.Id.Equals(expId));
 
+            var expenseDTO = _accounts.Find(acc => acc.Id.Equals(accId))
+                                      .Project(acc => acc.Expenses.FirstOrDefault(exp => exp.Id.Equals(expId)))
+                                      .FirstOrDefault().ToExpenseDTO();
+
             var account = _accounts.FindOneAndUpdate(filter, update);
 
-            return null;
+            return expenseDTO;
         }
         #endregion
     }
