@@ -17,6 +17,7 @@ namespace Expense.Services
         #endregion
 
         #region expenses
+        public IEnumerable<ExpenseDTO> GetExpenses(string accountId);
         public ExpenseDTO AddExpense(string accountId, ExpenseDTO expenseDTO);
         public ExpenseDTO ModifyExpense(string accountId, ExpenseDTO expenseDTO);
         public ExpenseDTO DeleteExpense(string accountId, string expenseId);

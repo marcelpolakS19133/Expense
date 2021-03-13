@@ -71,6 +71,11 @@ namespace Expense.Services
         }
         #endregion
         #region expenses
+        public IEnumerable<ExpenseDTO> GetExpenses(string accountId)
+        {
+            var accId = new ObjectId(accountId);
+            return _accounts.Find(acc => acc.Id.Equals(accId)).Project(acc => acc.Expenses).FirstOrDefault().Select(exp => exp.ToExpenseDTO());
+        }
         public ExpenseDTO AddExpense(string accountId, ExpenseDTO expenseDTO)
         {
             var expense = expenseDTO.ToExpense();
