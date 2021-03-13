@@ -87,7 +87,9 @@ namespace Expense.Services
         public ExpenseDTO ModifyExpense(string accountId, ExpenseDTO expense)
         {
             var accId = new ObjectId(accountId);
-            var filter = Builders<Account>.Filter.Where(acc => acc.Id.Equals(accId) && acc.Expenses.Any(exp => exp.Id.Equals(expense.Id)));
+            var expId = new ObjectId(expense.Id);
+
+            var filter = Builders<Account>.Filter.Where(acc => acc.Id.Equals(accId) && acc.Expenses.Any(exp => exp.Id.Equals(expId)));
 
             var updates = new List<UpdateDefinition<Account>>();
 
