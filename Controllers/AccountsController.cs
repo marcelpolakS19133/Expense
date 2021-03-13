@@ -57,6 +57,12 @@ namespace Expense.Controllers
             return Ok(db.DeleteAccount(id));
         }
 
+        [HttpGet("{accountId}/expenses")]
+        public ActionResult<IEnumerable<ExpenseDTO>> GetExpenses(string accountId)
+        {
+            return Ok(db.GetExpenses(accountId));
+        }
+
         [HttpPost("{accountId}/expenses")]
         public ActionResult<ExpenseDTO> AddExpense(string accountId, ExpenseDTO expense)
         {
