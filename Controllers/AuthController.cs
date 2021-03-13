@@ -49,6 +49,7 @@ namespace Expense.Controllers
             }
             return await Task.FromResult<ClaimsIdentity>(null);
         }
+
         public static async Task<object> GenerateJwt(ClaimsIdentity identity, JwtFactory jwtFactory, string userName, JwtIssuerOptions jwtOptions)
         {
             var response = new

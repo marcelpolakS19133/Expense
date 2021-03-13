@@ -26,7 +26,7 @@ namespace Expense
 {
     public class Startup
     {
-        private const string SecretKey = "tajnyklucz"; // todo: get this from somewhere secure
+        private const string SecretKey = "tajnyklucztajnyklucztajnyklucztajnyklucz"; // todo: get this from somewhere secure
         private readonly SymmetricSecurityKey _signingKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(SecretKey));
 
         public Startup(IConfiguration configuration)
@@ -129,6 +129,7 @@ namespace Expense
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "Expense", Version = "v1" });
             });
+            services.AddSingleton<JwtFactory>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
