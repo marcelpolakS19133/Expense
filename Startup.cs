@@ -13,11 +13,22 @@ using System.Threading.Tasks;
 using MongoDB.Driver;
 using Expense.Services;
 using MongoDB.Driver.Core.Events;
+using AspNetCore.Identity.MongoDbCore;
+using Expense.Authentication;
+using MongoDB.Bson;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using Microsoft.VisualBasic;
 
 namespace Expense
 {
     public class Startup
     {
+        private const string SecretKey = "tajnyklucz"; // todo: get this from somewhere secure
+        private readonly SymmetricSecurityKey _signingKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(SecretKey));
+
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
@@ -28,6 +39,13 @@ namespace Expense
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.Configure<JwtIssuerOptions>(options =>
+            {
+                options.Issuer = "Szef tokenow jwt";
+                options.Audience = "Parobasy";
+                options.SigningCredentials = new SigningCredentials(_signingKey, SecurityAlgorithms.HmacSha256);
+            });
+
             services.AddHttpClient<FacebookAuthService>();
             services.AddCors(options =>
             {
@@ -38,15 +56,18 @@ namespace Expense
                                             "http://www.contoso.com");
                     });
             });
+
             services.AddControllers();
+
+            var uri = Configuration["MongoConnectionString"];
+            if (uri == null)
+            {
+                uri = Environment.GetEnvironmentVariable("MongoConnectionString");
+            }
+            var database = Configuration["MongoDb"];
+
             services.AddSingleton(s =>
             {
-                var uri = Configuration["MongoConnectionString"];
-                if (uri == null)
-                {
-                    uri = Environment.GetEnvironmentVariable("MongoConnectionString");
-                }
-                var database = Configuration["MongoDb"];
                 var mongoSettings = MongoClientSettings.FromConnectionString(uri);
 
                 //mongoSettings.ClusterConfigurator = cb =>
@@ -58,7 +79,44 @@ namespace Expense
                 //};
 
                 var client = new MongoClient(mongoSettings);
+
                 return client.GetDatabase(database);
+            });
+
+            services.AddIdentity<AppUser, ApplicationRole>()
+                .AddMongoDbStores<AppUser, ApplicationRole, ObjectId>
+                (
+                    uri, database
+                ).AddDefaultTokenProviders();
+
+            services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            }).AddJwtBearer(configureOptions =>
+            {
+                configureOptions.ClaimsIssuer = "Szef tokenow jwt";
+                configureOptions.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer = true,
+                    ValidIssuer = "Szef tokenow jwt",
+
+                    ValidateAudience = true,
+                    ValidAudience = "Parobasy",
+
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = _signingKey,
+
+                    RequireExpirationTime = false,
+                    ValidateLifetime = true,
+                    ClockSkew = TimeSpan.Zero
+                };
+                configureOptions.SaveToken = true;
+            });
+
+            services.AddAuthorization(options =>
+            {
+                options.AddPolicy("ApiUser", policy => policy.RequireClaim("role", "api_access"));
             });
 
             services.AddSingleton<IExpensesDbService, ExpensesMongoDbService>();
@@ -66,7 +124,7 @@ namespace Expense
             services.AddSingleton<IAuthService, FacebookAuthService>();
 
             services.Configure<FBLoginConfig>(Configuration.GetSection("FBLoginConfig"));
-            
+
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "Expense", Version = "v1" });
