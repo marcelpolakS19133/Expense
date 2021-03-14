@@ -39,26 +39,6 @@ namespace Expense
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.Configure<JwtIssuerOptions>(options =>
-            {
-                options.Issuer = "Szef tokenow jwt";
-                options.Audience = "Parobasy";
-                options.SigningCredentials = new SigningCredentials(_signingKey, SecurityAlgorithms.HmacSha256);
-            });
-
-            services.AddHttpClient<FacebookAuthService>();
-            services.AddCors(options =>
-            {
-                options.AddDefaultPolicy(
-                    builder =>
-                    {
-                        builder.WithOrigins("http://example.com",
-                                            "http://www.contoso.com");
-                    });
-            });
-
-            services.AddControllers();
-
             var uri = Configuration["MongoConnectionString"];
             if (uri == null)
             {
@@ -82,7 +62,6 @@ namespace Expense
 
                 return client.GetDatabase(database);
             });
-
             services.AddIdentity<AppUser, ApplicationRole>()
                 .AddMongoDbStores<AppUser, ApplicationRole, ObjectId>
                 (
@@ -114,9 +93,32 @@ namespace Expense
                 configureOptions.SaveToken = true;
             });
 
+            services.AddSingleton<JwtFactory>();
+
+            
+            services.Configure<JwtIssuerOptions>(options =>
+            {
+                options.Issuer = "Szef tokenow jwt";
+                options.Audience = "Parobasy";
+                options.SigningCredentials = new SigningCredentials(_signingKey, SecurityAlgorithms.HmacSha256);
+            });
+
+            services.AddHttpClient<FacebookAuthService>();
+            services.AddCors(options =>
+            {
+                options.AddDefaultPolicy(
+                    builder =>
+                    {
+                        builder.WithOrigins("http://example.com",
+                                            "http://www.contoso.com");
+                    });
+            });
+
+            services.AddControllers();
+
             services.AddAuthorization(options =>
             {
-                options.AddPolicy("ApiUser", policy => policy.RequireClaim("role", "api_access"));
+                options.AddPolicy("ApiUser", policy => policy.RequireClaim("rol", "api_access"));
             });
 
             services.AddSingleton<IExpensesDbService, ExpensesMongoDbService>();
@@ -125,11 +127,13 @@ namespace Expense
 
             services.Configure<FBLoginConfig>(Configuration.GetSection("FBLoginConfig"));
 
+            
+
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "Expense", Version = "v1" });
             });
-            services.AddSingleton<JwtFactory>();
+            
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

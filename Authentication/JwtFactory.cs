@@ -25,9 +25,10 @@ namespace Expense.Authentication
                 new Claim(JwtRegisteredClaimNames.Sub, username),
                 new Claim(JwtRegisteredClaimNames.Jti, await _jwtOptions.JtiGenerator()),
                 new Claim(JwtRegisteredClaimNames.Iat, ToUnixEpochDate(_jwtOptions.IssuedAt).ToString(), ClaimValueTypes.Integer64),
-                identity.FindFirst("role"),
+                identity.FindFirst("rol"),
                 identity.FindFirst("id")
             };
+            var eee = new JwtSecurityTokenHandler();
 
             var jwt = new JwtSecurityToken(
                 issuer: _jwtOptions.Issuer,
@@ -37,14 +38,14 @@ namespace Expense.Authentication
                 expires: _jwtOptions.Expiration,
                 signingCredentials: _jwtOptions.SigningCredentials);
 
-            return new JwtSecurityTokenHandler().WriteToken(jwt);
+            return eee.WriteToken(jwt);
         }
         public ClaimsIdentity GenerateClaimsIdentity(string username, ObjectId id)
         {
             return new ClaimsIdentity(new GenericIdentity(username, "Token"), new[]
             {
                 new Claim("id", id.ToString()),
-                new Claim("role", "api_access")
+                new Claim("rol", "api_access")
             });
         }
         private static long ToUnixEpochDate(DateTime date)

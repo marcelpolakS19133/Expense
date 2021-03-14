@@ -1,4 +1,5 @@
 ﻿using Microsoft.IdentityModel.Tokens;
+using MongoDB.Bson;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -40,7 +41,7 @@ namespace Expense.Authentication
         /// "jti" (JWT ID) Claim (default ID is a GUID)
         /// </summary>
         public Func<Task<string>> JtiGenerator =>
-          () => Task.FromResult(Guid.NewGuid().ToString());
+          () => Task.FromResult(ObjectId.GenerateNewId().ToString());
         /// <summary>
         /// The signing key to use when generating tokens.
         /// </summary>

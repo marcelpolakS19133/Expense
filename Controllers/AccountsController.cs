@@ -9,9 +9,12 @@ using MongoDB.Driver;
 using Expense.Services;
 using System.Net;
 using Expense.DTO;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 
 namespace Expense.Controllers
 {
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     [ApiController]
     [Route("[controller]")]
     public class AccountsController : ControllerBase
@@ -25,6 +28,7 @@ namespace Expense.Controllers
         }
 
         [HttpGet]
+        [Authorize(Policy = "ApiUser")]
         public ActionResult<IEnumerable<AccountDTO>> Get(bool withExpenses)
         {
             return Ok(db.GetAccounts(withExpenses));
