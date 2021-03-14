@@ -62,6 +62,7 @@ namespace Expense
 
                 return client.GetDatabase(database);
             });
+
             services.AddIdentity<AppUser, ApplicationRole>()
                 .AddMongoDbStores<AppUser, ApplicationRole, ObjectId>
                 (
@@ -95,7 +96,7 @@ namespace Expense
 
             services.AddSingleton<JwtFactory>();
 
-            
+
             services.Configure<JwtIssuerOptions>(options =>
             {
                 options.Issuer = "Szef tokenow jwt";
@@ -127,13 +128,13 @@ namespace Expense
 
             services.Configure<FBLoginConfig>(Configuration.GetSection("FBLoginConfig"));
 
-            
+
 
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "Expense", Version = "v1" });
             });
-            
+
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
