@@ -1,4 +1,5 @@
 ﻿using Expense.Authentication;
+using Expense.Model;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -36,7 +37,9 @@ namespace Expense.Controllers
             var identity = await GetClaimsIdentity(username, password);
 
             var jwt = await GenerateJwt(identity, _jwtFactory, username, _jwtOptions);
-            return new OkObjectResult(jwt);
+            Response.Cookies.Append("jwt", jwt.AuthToken, new CookieOptions { HttpOnly = true, MaxAge = TimeSpan.FromSeconds(jwt.ExpiresIn)});
+            Response.Cookies.Append("currentUser", jwt.Id, new CookieOptions { HttpOnly = true });
+            return new OkResult();
         }
 
         private async Task<ClaimsIdentity> GetClaimsIdentity(string username, string password)
@@ -47,16 +50,19 @@ namespace Expense.Controllers
             {
                 return await Task.FromResult(_jwtFactory.GenerateClaimsIdentity(username, userToVerify.Id));
             }
+
+            
+
             return await Task.FromResult<ClaimsIdentity>(null);
         }
 
-        public static async Task<object> GenerateJwt(ClaimsIdentity identity, JwtFactory jwtFactory, string userName, JwtIssuerOptions jwtOptions)
+        public static async Task<JWT> GenerateJwt(ClaimsIdentity identity, JwtFactory jwtFactory, string userName, JwtIssuerOptions jwtOptions)
         {
-            var response = new
+            var response = new JWT
             {
-                id = identity.Claims.Single(c => c.Type == "id").Value,
-                auth_token = await jwtFactory.GenerateEncodedToken(userName, identity),
-                expires_in = (int)jwtOptions.ValidFor.TotalSeconds
+                Id = identity.Claims.Single(c => c.Type == "id").Value,
+                AuthToken = await jwtFactory.GenerateEncodedToken(userName, identity),
+                ExpiresIn = (int)jwtOptions.ValidFor.TotalSeconds
             };
 
             return response;

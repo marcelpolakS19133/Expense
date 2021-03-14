@@ -11,6 +11,8 @@ namespace Expense
     {
         [BsonId]
         public ObjectId Id { get; set; }
+        [BsonElement("ownerId")]
+        public string OwnerId { get; set; }
         [BsonElement("name")]
         public String Name { get; set; }
         [BsonElement("expenses")]

@@ -87,7 +87,7 @@ namespace Expense
                     ValidateIssuerSigningKey = true,
                     IssuerSigningKey = _signingKey,
 
-                    RequireExpirationTime = false,
+                    RequireExpirationTime = true,
                     ValidateLifetime = true,
                     ClockSkew = TimeSpan.Zero
                 };
@@ -95,7 +95,6 @@ namespace Expense
             });
 
             services.AddSingleton<JwtFactory>();
-
 
             services.Configure<JwtIssuerOptions>(options =>
             {
@@ -128,13 +127,10 @@ namespace Expense
 
             services.Configure<FBLoginConfig>(Configuration.GetSection("FBLoginConfig"));
 
-
-
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "Expense", Version = "v1" });
             });
-
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -146,6 +142,13 @@ namespace Expense
             app.UseSwagger();
             app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Expense v1"));
             //}
+
+            //Add jwt cookie as auth header
+            app.Use(async (context, next) =>
+            {
+                context.Request.Headers.Add("Authorization", $"Bearer {context.Request.Cookies["jwt"]??"none"}");
+                await next();
+            });
 
             app.UseCors(builder =>
             {

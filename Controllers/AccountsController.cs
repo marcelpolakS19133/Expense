@@ -14,7 +14,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 
 namespace Expense.Controllers
 {
-    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "ApiUser")]
     [ApiController]
     [Route("[controller]")]
     public class AccountsController : ControllerBase
@@ -28,64 +28,119 @@ namespace Expense.Controllers
         }
 
         [HttpGet]
-        [Authorize(Policy = "ApiUser")]
         public ActionResult<IEnumerable<AccountDTO>> Get(bool withExpenses)
         {
-            return Ok(db.GetAccounts(withExpenses));
+            var loggedInUser = User.FindFirst("id").Value;
+            return Ok(db.GetAccounts(withExpenses, loggedInUser));
         }
 
         [HttpGet("{id}")]
         public ActionResult<AccountDTO> GetById(string id, bool withExpenses)
         {
-            return Ok(db.GetAccountById(id, withExpenses));
+            if (db.IsAccountOwner(User.FindFirst("id").Value, id))
+            {
+                return Ok(db.GetAccountById(id, withExpenses));
+            }
+            else
+            {
+                return new ForbidResult();
+            }
         }
 
         [HttpPost]
         public ActionResult<AccountDTO> Post(AccountDTO account)
         {
-            var created = db.CreateAccount(account);
+            var loggedInUser = User.FindFirst("id").Value;
+            var created = db.CreateAccount(account, loggedInUser);
             return Created($"accounts/{created.Id}", created);
         }
 
         [HttpPut("{id}")]
         public ActionResult<AccountDTO> Modify(string id, AccountDTO account)
         {
-            account.Id = id;
-            var modified = db.ModifyAccount(account);
-            return modified == null ? StatusCode((int)HttpStatusCode.NotModified) : Ok(modified);
+            if (db.IsAccountOwner(User.FindFirst("id").Value, id))
+            {
+                account.Id = id;
+                var modified = db.ModifyAccount(account);
+                return modified == null ? StatusCode((int)HttpStatusCode.NotModified) : Ok(modified);
+            }
+            else
+            {
+                return new ForbidResult();
+            }
+            
         }
 
         [HttpDelete("{id}")]
         public ActionResult<AccountDTO> Delete(string id)
         {
-            return Ok(db.DeleteAccount(id));
+            if (db.IsAccountOwner(User.FindFirst("id").Value, id))
+            {
+
+                return Ok(db.DeleteAccount(id));
+            }
+            else
+            {
+                return new ForbidResult();
+            }
         }
 
         [HttpGet("{accountId}/expenses")]
         public ActionResult<IEnumerable<ExpenseDTO>> GetExpenses(string accountId)
         {
-            return Ok(db.GetExpenses(accountId));
+            if (db.IsAccountOwner(User.FindFirst("id").Value, accountId))
+            {
+
+                return Ok(db.GetExpenses(accountId));
+            }
+            else
+            {
+                return new ForbidResult();
+            }
         }
 
         [HttpPost("{accountId}/expenses")]
         public ActionResult<ExpenseDTO> AddExpense(string accountId, ExpenseDTO expense)
         {
-            var created = db.AddExpense(accountId, expense);
-            return Created($"accounts/{accountId}/expenses/{created.Id}", created);
+            if (db.IsAccountOwner(User.FindFirst("id").Value, accountId))
+            {
+                var created = db.AddExpense(accountId, expense);
+                return Created($"accounts/{accountId}/expenses/{created.Id}", created);
+            }
+            else
+            {
+                return new ForbidResult();
+            }
+            
         }
 
         [HttpPut("{accountId}/expenses/{expenseId}")]
         public ActionResult<ExpenseDTO> ModifyExpense(string accountId, string expenseId, ExpenseDTO expense)
         {
-            expense.Id = expenseId;
-            var modified = db.ModifyExpense(accountId, expense);
-            return Ok(modified);
+            if (db.IsAccountOwner(User.FindFirst("id").Value, accountId))
+            {
+                expense.Id = expenseId;
+                var modified = db.ModifyExpense(accountId, expense);
+                return Ok(modified);
+            }
+            else
+            {
+                return new ForbidResult();
+            }
+            
         }
 
         [HttpDelete("{accountId}/expenses/{expenseId}")]
         public ActionResult<ExpenseDTO> DeleteExpense(string accountId, string expenseId)
         {
-            return Ok(db.DeleteExpense(accountId, expenseId));
+            if (db.IsAccountOwner(User.FindFirst("id").Value, accountId))
+            {
+                return Ok(db.DeleteExpense(accountId, expenseId));
+            }
+            else
+            {
+                return new ForbidResult();
+            }
         }
     }
 }

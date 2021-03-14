@@ -21,10 +21,12 @@ namespace Expense.Services
             _accounts = db.GetCollection<Account>("Konta");
         }
         #region accounts
-        public IEnumerable<AccountDTO> GetAccounts(bool withExpenses)
+        public IEnumerable<AccountDTO> GetAccounts(bool withExpenses, string loggedInUser)
         {
-            var accounts = withExpenses ? _accounts.AsQueryable() : _accounts.AsQueryable().Select(acc => new Account { Id = acc.Id, Name = acc.Name });
-            var accountDTOs = new List<AccountDTO>(accounts.Count());
+            var accounts = withExpenses ? _accounts.Find(acc => acc.OwnerId.Equals(loggedInUser)).ToList()
+                                        : _accounts.Find(acc => acc.OwnerId.Equals(loggedInUser)).Project(acc => new Account { Id = acc.Id, Name = acc.Name }).ToList();
+
+            var accountDTOs = new List<AccountDTO>(accounts.Count);
             foreach (var account in accounts)
             {
                 accountDTOs.Add(account.ToAccountDTO());
@@ -41,10 +43,11 @@ namespace Expense.Services
                                                          .SingleOrDefault()).ToAccountDTO();
         }
 
-        public AccountDTO CreateAccount(AccountDTO accountDTO)
+        public AccountDTO CreateAccount(AccountDTO accountDTO, string loggedInUser)
         {
             var account = accountDTO.ToAccount();
             account.Id = ObjectId.GenerateNewId();
+            account.OwnerId = loggedInUser;
             _accounts.InsertOne(account);
             return account.ToAccountDTO();
         }
@@ -125,6 +128,16 @@ namespace Expense.Services
 
             return expenseDTO;
         }
+        #endregion
+
+        #region helpers
+
+        public bool IsAccountOwner(string ownerId, string accountId)
+        {
+            var accId = new ObjectId(accountId);
+            return ownerId.Equals(_accounts.Find(acc => acc.Id.Equals(accId)).FirstOrDefault().OwnerId);
+        }
+
         #endregion
     }
 }
