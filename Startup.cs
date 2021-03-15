@@ -21,6 +21,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Microsoft.VisualBasic;
+using Microsoft.AspNetCore.Antiforgery;
 
 namespace Expense
 {
@@ -63,6 +64,9 @@ namespace Expense
                 return client.GetDatabase(database);
             });
 
+            services.AddSingleton<JwtFactory>();
+            
+
             services.AddIdentity<AppUser, ApplicationRole>()
                 .AddMongoDbStores<AppUser, ApplicationRole, ObjectId>
                 (
@@ -94,8 +98,6 @@ namespace Expense
                 configureOptions.SaveToken = true;
             });
 
-            services.AddSingleton<JwtFactory>();
-
             services.Configure<JwtIssuerOptions>(options =>
             {
                 options.Issuer = "Szef tokenow jwt";
@@ -114,8 +116,6 @@ namespace Expense
                     });
             });
 
-            services.AddControllers();
-
             services.AddAuthorization(options =>
             {
                 options.AddPolicy("ApiUser", policy => policy.RequireClaim("rol", "api_access"));
@@ -127,6 +127,19 @@ namespace Expense
 
             services.Configure<FBLoginConfig>(Configuration.GetSection("FBLoginConfig"));
 
+            services.AddMvc(options =>
+            {
+                options.Filters.Add(new AutoValidateAntiforgeryTokenAttribute());
+            });
+
+            services.AddAntiforgery(options =>
+            {
+                options.HeaderName = "X-XSRF-TOKEN";
+                options.SuppressXFrameOptionsHeader = false;
+            });
+
+            services.AddControllersWithViews();
+
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "Expense", Version = "v1" });
@@ -134,33 +147,76 @@ namespace Expense
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, IAntiforgery antiforgery)
         {
             //if (env.IsDevelopment())
             //{
             app.UseDeveloperExceptionPage();
             app.UseSwagger();
-            app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Expense v1"));
+            app.UseSwaggerUI(c =>
+            {
+                c.SwaggerEndpoint("/swagger/v1/swagger.json", "Expense v1");
+                c.Interceptors.RequestInterceptorFunction = "(req) => {"
+                + "var getCookieValue = function(key) {"
+                    + "var equalities = document.cookie.split('; ');"
+                + " for (var i = 0; i < equalities.length; i++)"
+                + "{"
+           + "if (!equalities[i])"
+           + "{"
+               + "continue;"
+           + "}"
+
+           + "var splitted = equalities[i].split('=');"
+           + "if (splitted.length !== 2)"
+           + "{"
+               + "continue;"
+           + "}"
+
+           + "if (decodeURIComponent(splitted[0]) === key)"
+           + "{"
+               + "return decodeURIComponent(splitted[1] || '');"
+           + "}"
+        + "}"
+        + "return null;"
+        + "};"
+                + "req.headers['X-XSRF-TOKEN']=getCookieValue('XSRF-TOKEN'); return req; }";
+               // "(req) => {req.headers['X-XSRF-TOKEN'] = browser.cookies.get('XSRF-TOKEN');return req;}";
+            });
             //}
 
-            //Add jwt cookie as auth header
-            app.Use(async (context, next) =>
-            {
-                context.Request.Headers.Add("Authorization", $"Bearer {context.Request.Cookies["jwt"]??"none"}");
-                await next();
-            });
+            app.UseRouting();
 
             app.UseCors(builder =>
             {
                 builder
-                .AllowAnyOrigin()
+                .WithOrigins("http://localhost:4200")
+                .AllowCredentials()
                 .AllowAnyMethod()
                 .AllowAnyHeader();
             });
+            //Add jwt cookie as auth header
+            app.Use(async (context, next) =>
+            {
+                context.Request.Headers.Add("Authorization", $"Bearer {context.Request.Cookies["jwt"] ?? "none"}");
+                await next();
+            });
 
-            app.UseRouting();
-
+            app.UseAuthentication();
+            
             app.UseAuthorization();
+
+            app.Use(async (context, next) =>
+            {
+                if (context.Request.Method.Equals("GET"))
+                {
+                    var tokens = antiforgery.GetAndStoreTokens(context);
+                    context.Response.Cookies.Append("XSRF-TOKEN", tokens.RequestToken, new Microsoft.AspNetCore.Http.CookieOptions
+                    {
+                        HttpOnly = false
+                    });
+                }
+                await next();
+            });
 
             app.UseEndpoints(endpoints =>
             {
