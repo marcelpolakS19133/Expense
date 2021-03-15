@@ -1,4 +1,5 @@
 ﻿using Expense.Authentication;
+using Expense.DTO;
 using Expense.Model;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
@@ -12,7 +13,7 @@ using System.Threading.Tasks;
 
 namespace Expense.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("[controller]")]
     [ApiController]
     public class AuthController : ControllerBase
     {
@@ -26,19 +27,19 @@ namespace Expense.Controllers
             _userManager = userManager;
         }
         [HttpPost("register")]
-        public async Task<IActionResult> Register(string username, string password)
+        public async Task<IActionResult> Register(CredentialsDTO credentials)
         {
-            var result = await _userManager.CreateAsync(new AppUser(username, "aaa@basdasd.pl"), password);
+            var result = await _userManager.CreateAsync(new AppUser(credentials.Username, "aaa@basdasd.pl"), credentials.Password);
             return new OkObjectResult(result);
         }
         [HttpPost("login")]
-        public async Task<IActionResult> Login(string username, string password)
+        public async Task<IActionResult> Login(CredentialsDTO credentials)
         {
-            var identity = await GetClaimsIdentity(username, password);
+            var identity = await GetClaimsIdentity(credentials.Username, credentials.Password);
 
-            var jwt = await GenerateJwt(identity, _jwtFactory, username, _jwtOptions);
-            Response.Cookies.Append("jwt", jwt.AuthToken, new CookieOptions { HttpOnly = true, MaxAge = TimeSpan.FromSeconds(jwt.ExpiresIn)});
-            Response.Cookies.Append("currentUser", jwt.Id, new CookieOptions { HttpOnly = true });
+            var jwt = await GenerateJwt(identity, _jwtFactory, credentials.Username, _jwtOptions);
+            Response.Cookies.Append("jwt", jwt.AuthToken, new CookieOptions { HttpOnly = true, MaxAge = TimeSpan.FromSeconds(jwt.ExpiresIn) });
+            Response.Cookies.Append("currentUser", jwt.Id, new CookieOptions { MaxAge = TimeSpan.FromSeconds(jwt.ExpiresIn) });
             return new OkResult();
         }
 
@@ -46,12 +47,12 @@ namespace Expense.Controllers
         {
             var userToVerify = await _userManager.FindByNameAsync(username);
 
-            if(await _userManager.CheckPasswordAsync(userToVerify, password))
+            if (await _userManager.CheckPasswordAsync(userToVerify, password))
             {
                 return await Task.FromResult(_jwtFactory.GenerateClaimsIdentity(username, userToVerify.Id));
             }
 
-            
+
 
             return await Task.FromResult<ClaimsIdentity>(null);
         }
@@ -66,6 +67,14 @@ namespace Expense.Controllers
             };
 
             return response;
+        }
+
+        [HttpPost("logout")]
+        public async Task<IActionResult> Logout()
+        {
+            Response.Cookies.Delete("jwt");
+            Response.Cookies.Delete("currentUser");
+            return new OkResult();
         }
     }
 }
