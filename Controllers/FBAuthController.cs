@@ -28,7 +28,7 @@ namespace Expense.Controllers
         [HttpGet("step2")]
         public ActionResult Auth2()
         {
-            return Ok("siema");
+            return Ok();
         }
 
     }
